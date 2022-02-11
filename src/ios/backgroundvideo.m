@@ -137,7 +137,7 @@
 {
     NSArray *lib = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
     NSString *library = [lib objectAtIndex:0];
-    return [NSString stringWithFormat:@"%@/NoCloud/", library];
+    return [NSString stringWithFormat:@"%@/Cloud/", library];
 }
 
 -(AVCaptureDevice *)getCamera: (NSString *)camera
