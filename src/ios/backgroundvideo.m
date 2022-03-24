@@ -112,10 +112,77 @@
 {
     [output stopRecording];
     self.view.alpha = 0;
+    NSString *exportPath;
+    
+    // MP4 Conversion using the AVFoundation Framework
+        
+        [self.commandDelegate runInBackground:^{
 
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:outputPath];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            // Create the asset url with the video file
+        
+            NSURL *videoURL = [[NSURL alloc] initFileURLWithPath:outputPath];
+        
+            AVURLAsset *avAsset = [AVURLAsset URLAssetWithURL:videoURL options:nil];
+            NSArray *compatiblePresets = [AVAssetExportSession exportPresetsCompatibleWithAsset:avAsset];
+
+            // Check if video is supported for conversion or not
+            if ([compatiblePresets containsObject:AVAssetExportPresetMediumQuality]) {
+                // Create Export session
+                AVAssetExportSession *exportSession = [[AVAssetExportSession alloc]initWithAsset:avAsset presetName:AVAssetExportPresetMediumQuality];
+
+                // Creating temp path to save the converted video
+                
+                // NSString* documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+                // use temp directory
+                
+                NSString* tempDirectory = NSTemporaryDirectory();
+                
+                NSString* myDocumentPath = [tempDirectory stringByAppendingPathComponent:@"capturedVideo.mp4"];
+                NSURL *url = [[NSURL alloc] initFileURLWithPath:myDocumentPath];
+
+                // Check if the file already exists then remove the previous file
+                if ([[NSFileManager defaultManager]fileExistsAtPath:myDocumentPath]) {
+                    [[NSFileManager defaultManager]removeItemAtPath:myDocumentPath error:nil];
+                }
+            
+                NSLog(@"Creating export file: %@",myDocumentPath);
+                
+                exportSession.outputURL = url;
+            
+                // Set the output file format, etc.
+                exportSession.outputFileType = AVFileTypeMPEG4;
+                exportSession.shouldOptimizeForNetworkUse = YES;
+            
+                [exportSession exportAsynchronouslyWithCompletionHandler:^{
+                
+                    switch ([exportSession status])    {
+                        case AVAssetExportSessionStatusFailed:
+                            NSLog(@"Video export session failed");
+                            
+                            break;
+                        case AVAssetExportSessionStatusCancelled:
+                            NSLog(@"Video export canceled");
+                           
+                            break;
+                        case AVAssetExportSessionStatusCompleted:
+                            //Video conversion finished
+                            NSLog(@"Video MPEG compression export successful!");
+                            NSLog(@"Export Success %@",myDocumentPath);
+                            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:myDocumentPath];
+                            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                            break;
+                       
+                    }
+                }];
+            }
+            else {
+                NSLog(@"Video file not supported!");
+            }
+        }];
+
+   
 }
+
 
 -(NSString*)getFileName
 {
@@ -137,7 +204,7 @@
 {
     NSArray *lib = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
     NSString *library = [lib objectAtIndex:0];
-    return [NSString stringWithFormat:@"%@/Cloud/", library];
+    return [NSString stringWithFormat:@"%@/NoCloud/", library];
 }
 
 -(AVCaptureDevice *)getCamera: (NSString *)camera
