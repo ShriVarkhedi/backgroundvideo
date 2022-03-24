@@ -6,7 +6,7 @@
 # How to use
 ### Install
 ```
-cordova plugin add https://github.com/jamesla/backgroundvideo.git
+cordova plugin add https://github.com/ShriVarkhedi/backgroundvideo.git
 ```
 ### Usage
 ```
